@@ -33,21 +33,30 @@ afterEach(() => {
 type Spring = { name: string; extras?: { poqpoq?: { drive?: { wag?: unknown } } } }
 
 describe.skipIf(!present)('demo asset (demo/assets/lemur.glb)', () => {
-  it('is sanitized and carries the tuned wag and gains, five springs and one animation', () => {
+  // The avatar is swappable (a fresh Harry export replaces it): these checks pin what the DEMO needs —
+  // sanitized, the tuned wag, one walk, every declared spring and surface loading — not one export's numbers.
+  const springsOf = (): { name: string; extras?: { poqpoq?: { drive?: { wag?: unknown }; surface?: { gain?: number } } } }[] => {
+    const { json } = readGlb(readFileSync(GLB)) as { json: Record<string, unknown> }
+    return (json.extensions as Record<string, { springs: Spring[] }>).VRMC_springBone.springs as never
+  }
+  it('is sanitized, wags as tuned, walks, and declares its springs and surface gains', () => {
     const { json } = readGlb(readFileSync(GLB)) as { json: Record<string, unknown> }
     const text = JSON.stringify(json)
     expect(UUID_RE.test(text)).toBe(false)
     expect(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(text)).toBe(false)
-    const springs = (json.extensions as Record<string, { springs: Spring[] }>).VRMC_springBone.springs
-    // The demo lemur is its creator's own Harry export, so its belly leaf rides along at gain 0.
-    expect(springs.map((s) => s.name)).toEqual(['tail', 'jiggle-LeftBreast', 'jiggle-RightBreast', 'jiggle-Belly', 'jiggle-Hair'])
+    const springs = springsOf()
+    expect(springs[0]!.name).toBe('tail')
     expect(springs[0]!.extras?.poqpoq?.drive?.wag).toEqual({ amplitudeDeg: 65, hz: 0.5, bias: 0 })
-    const gain = (n: string) => (springs.find((s) => s.name === n)!.extras as { poqpoq: { surface: { gain: number } } }).poqpoq.surface.gain
-    expect([gain('jiggle-Hair'), gain('jiggle-LeftBreast'), gain('jiggle-RightBreast'), gain('jiggle-Belly')]).toEqual([0.4, 0.45, 0.45, 0])
+    for (const s of springs.slice(1)) {
+      expect(s.name).toMatch(/^jiggle-/)
+      const gain = s.extras?.poqpoq?.surface?.gain
+      expect(gain === undefined || (gain >= 0 && gain <= 1), `${s.name} gain ${gain}`).toBe(true)
+    }
+    expect(springs.some((s) => s.name === 'jiggle-Hair'), 'the ears bounce (hair surface)').toBe(true)
     expect((json.animations as { name: string }[]).map((a) => a.name)).toEqual(['walk'])
   })
 
-  it('loads in Babylon (NullEngine) with its walk group, springs and surface jiggle', async () => {
+  it('loads in Babylon (NullEngine) with its walk group, every declared spring and surface', async () => {
     engine = new NullEngine()
     ;(engine as unknown as { getDeltaTime(): number }).getDeltaTime = () => 1000 / 60
     const scene = new Scene(engine)
@@ -55,13 +64,12 @@ describe.skipIf(!present)('demo asset (demo/assets/lemur.glb)', () => {
     const result = await SceneLoader.ImportMeshAsync('', '', new Uint8Array(readFileSync(GLB)), scene, undefined, '.glb')
     expect(result.animationGroups.length).toBe(1)
     const physics = attachHarryPhysics(result.meshes[0] as unknown as TransformNode, scene, result.meshes as AbstractMesh[], { label: 'demo' })
-    expect(physics.springs!.springNames).toEqual(['tail', 'jiggle-LeftBreast', 'jiggle-RightBreast', 'jiggle-Belly', 'jiggle-Hair'])
-    expect(physics.jiggle!.probe().regions.map((r) => [r.springName, r.modes])).toEqual([
-      ['jiggle-LeftBreast', 3],
-      ['jiggle-RightBreast', 3],
-      ['jiggle-Belly', 3],
-      ['jiggle-Hair', 5],
-    ])
+    const declared = springsOf()
+    expect(physics.springs!.springNames).toEqual(declared.map((s) => s.name))
+    const surfaces = declared.filter((s) => s.extras?.poqpoq?.surface !== undefined).map((s) => s.name)
+    const regions = physics.jiggle!.probe().regions
+    expect(regions.map((r) => r.springName)).toEqual(surfaces)
+    for (const r of regions) expect(r.modes, r.springName).toBeGreaterThan(0)
     result.animationGroups[0]!.start(true)
     for (let i = 0; i < 5; i++) scene.render()
     expect(physics.springs!.runtime.probe().steps).toBeGreaterThan(0)

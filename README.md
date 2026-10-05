@@ -31,11 +31,11 @@ npm install @poqpoq/harry-babylon @babylonjs/core @babylonjs/loaders
 ## Usage
 
 ```ts
-import { SceneLoader, type AbstractMesh, type TransformNode } from '@babylonjs/core'
+import { ImportMeshAsync, type AbstractMesh, type TransformNode } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF/2.0/index.js'
 import { attachHarryPhysics, bindClipToSkeleton } from '@poqpoq/harry-babylon' // registers the VRMC_springBone loader extension
 
-const result = await SceneLoader.ImportMeshAsync('', '/avatars/', 'my-avatar.glb', scene)
+const result = await ImportMeshAsync('/avatars/my-avatar.glb', scene)
 const root = result.meshes[0] as unknown as TransformNode
 // Set the avatar's final scale/rotation/position first: the springs capture their rest pose now.
 const physics = attachHarryPhysics(root, scene, result.meshes as AbstractMesh[], { label: 'my-avatar' })
@@ -124,14 +124,14 @@ export const createScene = async function () {
   const HB = await new Function('u', 'return import(u)')('https://cdn.jsdelivr.net/npm/@poqpoq/harry-babylon@0.1/dist/harry-babylon.playground.js');
 
   // Load the avatar AFTER the import: that registers the VRMC_springBone loader extension.
-  const result = await BABYLON.SceneLoader.ImportMeshAsync('', 'https://YOUR-HOST/', 'avatar.glb', scene);
+  const result = await BABYLON.ImportMeshAsync('https://YOUR-HOST/avatar.glb', scene);
   const physics = HB.attachHarryPhysics(result.meshes[0], scene, result.meshes, { label: 'pg' });
   physics.springs?.setMood('wag');
   return scene;
 };
 ```
 
-This was tested in Playground 9.29.0 in JavaScript mode. A literal `await import(url)` fails there with "Parse error @:1:1"; the `new Function` wrapper above runs, and springs plus surface jiggle attached. The same file also works on a plain page that loads `babylon.js` and `babylonjs.loaders.min.js` from `cdn.babylonjs.com`, with no `<script type="module">` needed. The Playground's TypeScript mode wasn't tried.
+This was tested in Playground 9.29.0 in JavaScript mode, loading the bundle from jsDelivr. A literal `await import(url)` fails there with "Parse error @:1:1"; the `new Function` wrapper above runs, and springs plus surface jiggle attached. The same file also works on a plain page that loads `babylon.js` and `babylonjs.loaders.min.js` from `cdn.babylonjs.com`, with no `<script type="module">` needed. The Playground's TypeScript mode wasn't tried.
 
 ## What the file must contain
 

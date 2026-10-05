@@ -44,6 +44,13 @@ jobs:
         run: npm test
       - name: Build the demo
         run: npm run build:pages
+      # The avatar under STABLE names, for links that outlive a rebuild: `lemur.glb` for anyone,
+      # and the hashed name the public Playground (#6NLVHQ, linked from the forum post) was saved
+      # with — Vite's hash changes whenever the avatar is swapped.
+      - name: Stable avatar names
+        run: |
+          cp demo/assets/lemur.glb dist-demo/lemur.glb
+          cp demo/assets/lemur.glb dist-demo/assets/lemur-B4d-tddP.glb
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-demo

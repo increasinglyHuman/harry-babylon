@@ -23,7 +23,7 @@ Most of it is plain glTF and works in any engine: the armature, the skin weights
 ## Install
 
 ```sh
-npm install harry-babylon @babylonjs/core @babylonjs/loaders
+npm install @poqpoq/harry-babylon @babylonjs/core @babylonjs/loaders
 ```
 
 `@babylonjs/core` and `@babylonjs/loaders` (9.x) are peer dependencies.
@@ -33,7 +33,7 @@ npm install harry-babylon @babylonjs/core @babylonjs/loaders
 ```ts
 import { SceneLoader, type AbstractMesh, type TransformNode } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF/2.0/index.js'
-import { attachHarryPhysics, bindClipToSkeleton } from 'harry-babylon' // registers the VRMC_springBone loader extension
+import { attachHarryPhysics, bindClipToSkeleton } from '@poqpoq/harry-babylon' // registers the VRMC_springBone loader extension
 
 const result = await SceneLoader.ImportMeshAsync('', '/avatars/', 'my-avatar.glb', scene)
 const root = result.meshes[0] as unknown as TransformNode
@@ -50,7 +50,7 @@ clipGroup.start(true)
 // Later: physics.dispose()
 ```
 
-Import `harry-babylon` before the avatar loads. Bundlers that drop side-effect-only imports can call `registerHarryLoaderExtension()` instead. `attachHarryPhysics` never throws for a file without springs: `springs` and `jiggle` are just `null`.
+Import `@poqpoq/harry-babylon` before the avatar loads. Bundlers that drop side-effect-only imports can call `registerHarryLoaderExtension()` instead. `attachHarryPhysics` never throws for a file without springs: `springs` and `jiggle` are just `null`.
 
 Set the avatar's final transform, and any static pose, before calling `attachHarryPhysics`. The spring runtime captures each joint's rest from the scene at that moment. A static pose on bones that aren't spring joints (relaxing the arms out of a T-pose, for example) is safe to apply first. If you pose spring joints later instead, call `physics.springs.requestReset()` afterwards.
 
@@ -88,12 +88,12 @@ physics.setPauseOffscreen(true)
 
 | Import | Contents |
 |---|---|
-| `harry-babylon` | Everything, plus loader-extension registration and the VRoid fallback for `attachHarryPhysics` |
-| `harry-babylon/springs` | `DeclaredSpringBones`, `SpringBoneRuntime`, the `VRMC_springBone` parser, the layered drive, and the loader extension (registered on import) |
-| `harry-babylon/jiggle` | `SurfaceJiggleReader`, the `extras.poqpoq.surface` parser, and the modal oscillator |
-| `harry-babylon/clips` | `bindClipToSkeleton`, `REST_ANCHORED_BONES`, and the hip-height helpers |
-| `harry-babylon/vroid` | VRoid spring synthesis: `springsFromVRoidNames`, `springsForBody`, and `registerVRoidSynthesis()` |
-| `harry-babylon/playground` | The single-file Playground/CDN build (see below) |
+| `@poqpoq/harry-babylon` | Everything, plus loader-extension registration and the VRoid fallback for `attachHarryPhysics` |
+| `@poqpoq/harry-babylon/springs` | `DeclaredSpringBones`, `SpringBoneRuntime`, the `VRMC_springBone` parser, the layered drive, and the loader extension (registered on import) |
+| `@poqpoq/harry-babylon/jiggle` | `SurfaceJiggleReader`, the `extras.poqpoq.surface` parser, and the modal oscillator |
+| `@poqpoq/harry-babylon/clips` | `bindClipToSkeleton`, `REST_ANCHORED_BONES`, and the hip-height helpers |
+| `@poqpoq/harry-babylon/vroid` | VRoid spring synthesis: `springsFromVRoidNames`, `springsForBody`, and `registerVRoidSynthesis()` |
+| `@poqpoq/harry-babylon/playground` | The single-file Playground/CDN build (see below) |
 
 `dist/` is plain ESM with explicit `.js` extensions, so it runs under Node's ESM loader as well as in bundlers.
 
@@ -111,7 +111,7 @@ Approximate sizes, minified, with Babylon external:
 
 ## Babylon Playground / CDN
 
-`dist/harry-babylon.playground.js` is one minified ES module (about 53 KB, 18 KB gzipped). It reads Babylon from the global `BABYLON`, which is how the Playground and the UMD CDN builds provide it, and doesn't bundle its own copy. Host the file anywhere that sends CORS headers (a CDN such as jsDelivr or unpkg serving the published package, or your own server). Then, in the Playground's **JavaScript** mode:
+`dist/harry-babylon.playground.js` is one minified ES module (about 53 KB, 18 KB gzipped). It reads Babylon from the global `BABYLON`, which is how the Playground and the UMD CDN builds provide it, and doesn't bundle its own copy. jsDelivr serves it straight from npm (`https://cdn.jsdelivr.net/npm/@poqpoq/harry-babylon@0.1/dist/harry-babylon.playground.js`), or host the file anywhere that sends CORS headers. Then, in the Playground's **JavaScript** mode:
 
 ```js
 export const createScene = async function () {
@@ -121,7 +121,7 @@ export const createScene = async function () {
   new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
 
   // Wrapped in Function on purpose: the Playground's code processor rejects a literal import(url).
-  const HB = await new Function('u', 'return import(u)')('https://YOUR-HOST/harry-babylon.playground.js');
+  const HB = await new Function('u', 'return import(u)')('https://cdn.jsdelivr.net/npm/@poqpoq/harry-babylon@0.1/dist/harry-babylon.playground.js');
 
   // Load the avatar AFTER the import: that registers the VRMC_springBone loader extension.
   const result = await BABYLON.SceneLoader.ImportMeshAsync('', 'https://YOUR-HOST/', 'avatar.glb', scene);

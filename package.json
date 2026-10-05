@@ -1,8 +1,17 @@
 {
-  "name": "harry-babylon",
+  "name": "@poqpoq/harry-babylon",
   "version": "0.1.0",
   "description": "Babylon.js runtime for avatars exported by Harry: declared spring bones (tails, hair, soft tissue), surface jiggle, and a clip binder.",
   "license": "MIT",
+  "author": "increasinglyHuman",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/increasinglyHuman/harry-babylon.git"
+  },
+  "homepage": "https://github.com/increasinglyHuman/harry-babylon#readme",
+  "bugs": {
+    "url": "https://github.com/increasinglyHuman/harry-babylon/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -34,7 +43,9 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE.md",
+    "CHANGELOG.md"
   ],
   "sideEffects": [
     "./dist/index.js",
@@ -43,11 +54,15 @@
   ],
   "keywords": [
     "babylonjs",
+    "babylon",
     "gltf",
     "vrm",
+    "vrmc-springbone",
     "spring-bone",
     "avatar",
-    "jiggle"
+    "tail",
+    "jiggle",
+    "harry"
   ],
   "engines": {
     "node": ">=20"
@@ -59,7 +74,9 @@
     "demo": "vite --config demo/vite.config.ts",
     "build:pages": "vite build --config demo/vite.config.ts",
     "sanitize-glb": "node scripts/sanitize-glb.mjs",
-    "build:playground": "node scripts/build-playground.mjs"
+    "build:playground": "node scripts/build-playground.mjs",
+    "prepack": "npm run build",
+    "test:consumer": "node test/consumer/probe.mjs"
   },
   "peerDependencies": {
     "@babylonjs/core": "^9.29.0",
@@ -73,5 +90,8 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.3",
     "vitest": "^4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

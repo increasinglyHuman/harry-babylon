@@ -1,0 +1,59 @@
+name: Pages
+
+# Builds the live demo and deploys it to GitHub Pages:
+# https://increasinglyhuman.github.io/harry-babylon/
+#
+# The demo avatar and its clips are NOT in git (see NOTICE.md). They are
+# attached to the `demo-assets-v1` release and downloaded here, so they ship
+# only with the hosted demo, never with the source.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fetch the demo assets (release demo-assets-v1)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p demo/assets/clips
+          gh release download demo-assets-v1 --repo "$GITHUB_REPOSITORY" --pattern lemur.glb --dir demo/assets
+          gh release download demo-assets-v1 --repo "$GITHUB_REPOSITORY" --pattern hop.glb --pattern squat.glb --dir demo/assets/clips
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test (the demo-asset checks run, since the assets are present)
+        run: npm test
+      - name: Build the demo
+        run: npm run build:pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-demo
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

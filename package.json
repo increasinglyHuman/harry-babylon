@@ -1,0 +1,77 @@
+{
+  "name": "harry-babylon",
+  "version": "0.1.0",
+  "description": "Babylon.js runtime for avatars exported by Harry: declared spring bones (tails, hair, soft tissue), surface jiggle, and a clip binder.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./springs": {
+      "types": "./dist/entries/springs.d.ts",
+      "import": "./dist/entries/springs.js"
+    },
+    "./jiggle": {
+      "types": "./dist/entries/jiggle.d.ts",
+      "import": "./dist/entries/jiggle.js"
+    },
+    "./clips": {
+      "types": "./dist/entries/clips.d.ts",
+      "import": "./dist/entries/clips.js"
+    },
+    "./vroid": {
+      "types": "./dist/entries/vroid.d.ts",
+      "import": "./dist/entries/vroid.js"
+    },
+    "./playground": "./dist/harry-babylon.playground.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/springs/vrmcSpringBoneLoaderExtension.js",
+    "./dist/harry-babylon.playground.js"
+  ],
+  "keywords": [
+    "babylonjs",
+    "gltf",
+    "vrm",
+    "spring-bone",
+    "avatar",
+    "jiggle"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/build-playground.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "demo": "vite --config demo/vite.config.ts",
+    "build:pages": "vite build --config demo/vite.config.ts",
+    "sanitize-glb": "node scripts/sanitize-glb.mjs",
+    "build:playground": "node scripts/build-playground.mjs"
+  },
+  "peerDependencies": {
+    "@babylonjs/core": "^9.29.0",
+    "@babylonjs/loaders": "^9.29.0"
+  },
+  "devDependencies": {
+    "@babylonjs/core": "^9.29.0",
+    "@babylonjs/loaders": "^9.29.0",
+    "@types/node": "^24.19.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3",
+    "vitest": "^4.0.18"
+  }
+}

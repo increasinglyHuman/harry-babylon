@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>harry-babylon demo</title>
+    <style>
+      :root {
+        --glass: rgba(14, 17, 22, 0.66);
+        --line: rgba(255, 255, 255, 0.1);
+        --ink: #eef1f5;
+        --dim: #a3adba;
+        --faint: #6f7a88;
+        --accent: #8fb8ff;
+        --accent-ink: #0b1220;
+        --radius: 14px;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; height: 100%; overflow: hidden; background: #0a0a0a; color: var(--ink);
+        font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #view { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; outline: none; touch-action: none; }
+      .card {
+        position: fixed; background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius);
+        backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+      }
+
+      /* stats */
+      .stats {
+        top: 16px; right: 16px; display: grid; grid-template-columns: repeat(4, auto); gap: 2px 18px;
+        padding: 10px 16px; font-variant-numeric: tabular-nums;
+      }
+      .stat { display: flex; flex-direction: column; min-width: 44px; }
+      .stat b { font-size: 18px; font-weight: 600; line-height: 1.2; }
+      .stat span { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+      .stat.full b { color: #9be7a5; } .stat.reduced b { color: #f2d48a; } .stat.held b { color: #9fb2c8; }
+      .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; font-size: 11.5px; color: var(--dim); max-width: 340px; }
+      .meta code { font: 0.95em ui-monospace, "Cascadia Mono", Consolas, monospace; color: #dfe6ee; }
+      .tag { color: var(--faint); white-space: nowrap; }
+
+      /* controls */
+      .controls {
+        left: 16px; bottom: 16px; width: min(640px, calc(100vw - 32px));
+        padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+      }
+      .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .title { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; margin-right: 4px; }
+      button, select {
+        font: inherit; font-size: 13px; font-weight: 550; color: var(--dim); cursor: pointer;
+        background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+        transition: background 0.15s, color 0.15s, border-color 0.15s; -webkit-tap-highlight-color: transparent;
+      }
+      button:hover, select:hover { color: var(--ink); background: rgba(255, 255, 255, 0.1); }
+      button[aria-pressed='true'] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+      button:disabled { opacity: 0.4; cursor: default; }
+      button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      select option { background: #151a21; color: var(--ink); }
+      label { display: flex; align-items: center; gap: 6px; color: var(--dim); font-size: 13px; }
+      #status { font-size: 12px; color: var(--dim); }
+
+      /* about */
+      dialog.about {
+        position: fixed; inset: 0; margin: auto; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+        padding: 18px 20px; color: var(--ink); background: rgba(14, 17, 22, 0.86); border: 1px solid var(--line); border-radius: var(--radius);
+        backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
+      }
+      dialog.about::backdrop { background: rgba(0, 0, 0, 0.45); }
+      .about h2 { margin: 0 0 2px; font-size: 18px; letter-spacing: -0.01em; }
+      .about h3 { margin: 14px 0 4px; font-size: 11.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+      .about p, .about li { margin: 0 0 6px; color: var(--dim); font-size: 13.5px; }
+      .about ul { margin: 0; padding-left: 18px; }
+      .about a { color: var(--accent); }
+      .about .sub { color: var(--faint); font-size: 12.5px; margin-bottom: 10px; }
+      .about form { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+      @media (max-width: 640px) {
+        .stats { top: 8px; right: 8px; left: 8px; grid-template-columns: repeat(4, 1fr); padding: 7px 12px; gap: 0 10px; }
+        .stat b { font-size: 15px; } .stat span { font-size: 10px; }
+        .controls { left: 8px; bottom: 8px; width: calc(100vw - 16px); }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+
+    <aside class="card stats" id="stats" aria-live="off">
+      <div class="stat"><b id="fps">–</b><span>fps</span></div>
+      <div class="stat"><b id="ms">–</b><span>ms / frame</span></div>
+      <div class="stat"><b id="draws">–</b><span>draw calls</span></div>
+      <div class="stat"><b id="verts">–</b><span>active verts</span></div>
+      <div class="stat"><b id="avatars">–</b><span>avatars</span></div>
+      <div class="stat full"><b id="full">–</b><span>full rate</span></div>
+      <div class="stat reduced"><b id="reduced">–</b><span>reduced</span></div>
+      <div class="stat held"><b id="held">–</b><span>held</span></div>
+      <div class="meta"><span>clip <code id="clip">–</code> · off <b id="off">0</b></span><span class="tag" id="version">harry-babylon</span></div>
+    </aside>
+
+    <section class="card controls" aria-label="Demo controls">
+      <div class="row">
+        <span class="title">harry-babylon</span>
+        <button id="walk" aria-pressed="true">Walk</button>
+        <button id="hop">Hop</button>
+        <button id="squat" aria-pressed="false" title="Crossfade into a looping air squat and look from the side at the elbow and knee correctives">Squat (creases)</button>
+        <button id="front">Front view</button>
+        <button id="follow" aria-pressed="true">Follow</button>
+        <button id="springs" aria-pressed="true">Physics</button>
+      </div>
+      <div class="row">
+        <label id="moodWrap" hidden>Tail mood <select id="mood"></select></label>
+        <button id="crowd">Spawn crowd (20)</button>
+        <button id="aboutOpen" aria-haspopup="dialog">About</button>
+        <label id="budgetWrap" hidden>Budget
+          <select id="budget">
+            <option value="6">6</option>
+            <option value="12" selected>12</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
+      <div id="status">Loading…</div>
+    </section>
+
+    <dialog class="about" id="about" aria-labelledby="aboutTitle">
+      <h2 id="aboutTitle">harry-babylon</h2>
+      <p class="sub"><span id="aboutVersion">harry-babylon</span> · MIT License</p>
+      <p>A Babylon.js runtime for avatars finished in <a href="https://poqpoq.com/harry/" target="_blank" rel="noopener">Harry</a>. Harry gives generated characters hands, elbows and knees that crease where they should, wagging tails, and bouncing hair and soft tissue, and writes it all into the GLB. This library plays the parts that need a runtime: springs, tail moods, surface jiggle and clip binding.</p>
+      <h3>What you're seeing</h3>
+      <ul>
+        <li>A walk, a hop and an air squat played on the avatar, with Harry's elbow and knee correctives baked into each clip.</li>
+        <li>Tail, ears and chest driven live by the library's springs and surface jiggle, on a fixed 60 Hz clock.</li>
+        <li>In the crowd, a budget and a distance LOD decide who simulates at full rate, at a reduced rate, or holds.</li>
+      </ul>
+      <h3>License</h3>
+      <p>The library's code is released under the MIT License. The demo's avatar and animations are not part of the library and are not MIT-licensed: the lemur warrior was generated with Tripo and finished in Harry, and the animations are Mixamo motions retargeted by Harry. They're shown in this demo only; please don't extract or redistribute them.</p>
+      <h3>Credits</h3>
+      <ul>
+        <li><a href="https://www.babylonjs.com/" target="_blank" rel="noopener">Babylon.js</a> (Apache 2.0), a peer dependency, not bundled.</li>
+        <li>The <a href="https://github.com/vrm-c/vrm-specification" target="_blank" rel="noopener">VRMC_springBone 1.0</a> extension by the VRM Consortium.</li>
+        <li>Environment lighting from Babylon.js's public asset CDN.</li>
+      </ul>
+      <form method="dialog"><button autofocus>Close</button></form>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
